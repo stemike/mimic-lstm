@@ -43,7 +43,6 @@ def get_activations(model, inputs, print_shape_only=False, layer_name=None, verb
     return activations
 
 
-
 def get_data_recurrent(n, time_steps, input_dim, attention_column=10):
     """
     Data generation. x is random except that first value equals the target y.
@@ -67,13 +66,13 @@ def get_data_recurrent(n, time_steps, input_dim, attention_column=10):
 def attention_3d_block(inputs, TIME_STEPS):
     """
     inputs.shape = (batch_size, time_steps, input_dim)
-    """ 
+    """
     input_dim = int(inputs.shape[2])
     a = Permute((2, 1))(inputs)
     a = Reshape((input_dim, TIME_STEPS))(a)
     a = Dense(TIME_STEPS, activation='softmax')(a)
     a_probs = Permute((2, 1), name='attention_vec')(a)
-    #output_attention_mul = merge([inputs, a_probs], name='attention_mul', mode='mul')
+    # output_attention_mul = merge([inputs, a_probs], name='attention_mul', mode='mul')
     output_attention_mul = multiply([inputs, a_probs])
     return output_attention_mul
 
@@ -81,19 +80,20 @@ def attention_3d_block(inputs, TIME_STEPS):
 def attention_3d_block_time_features(inputs, TIME_STEPS):
     """
     inputs.shape = (batch_size, time_steps, input_dim)
-    """ 
+    """
     input_dim = int(inputs.shape[2])
     a = Flatten()(inputs)
-    a = Dense(TIME_STEPS*input_dim, activation='softmax')(a)
+    a = Dense(TIME_STEPS * input_dim, activation='softmax')(a)
     a = Reshape((input_dim, TIME_STEPS))(a)
     a_probs = Permute((2, 1), name='attention_vec')(a)
     output_attention_mul = multiply([inputs, a_probs])
     return output_attention_mul
 
+
 def attention_spatial_block(inputs):
     """
     inputs.shape = (batch_size, time_steps, input_dim)
-    """ 
+    """
     input_dim = int(inputs.shape[2])
     a = Reshape((TIME_STEPS, input_dim))(inputs)
     a_probs = Dense(input_dim, activation='softmax', name='attention_vec')(a)
@@ -106,14 +106,9 @@ def attention_spatial_block(inputs):
 def model_attention_applied_before_lstm():
     inputs = Input(shape=(TIME_STEPS, INPUT_DIM,))
     attention_mul = attention_3d_block(inputs)
-    #attention_mul = attention_spatial_block(inputs)
+    # attention_mul = attention_spatial_block(inputs)
     lstm_units = 32
     attention_mul = LSTM(lstm_units, return_sequences=False)(attention_mul)
     output = Dense(1, activation='sigmoid')(attention_mul)
     model = Model(input=[inputs], output=output)
     return model
-
-
-
-
-
