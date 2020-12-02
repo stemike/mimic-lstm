@@ -195,13 +195,13 @@ class MimicParser(object):
         for i, df_chunk in enumerate(pd.read_csv(filepath, iterator=True, chunksize=chunksize)):
             function = lambda x,y: x.union(y)
             df = df_chunk[df_chunk['ITEMID'].isin(reduce(function, pid.dictionary.values()))]
-            df.dropna(inplace=True, axis=0, subset=columns)
+            df_w = df.dropna(inplace=False, axis=0, subset=columns)
             if i == 0:
-                df.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False, 
+                df_w.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
                           columns=columns)
                 print(i)
             else:
-                df.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
+                df_w.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
                           columns=columns, header=None, mode='a')
                 print(i)
             
@@ -262,7 +262,7 @@ class MimicParser(object):
         df2 = pd.pivot_table(df, index='HADMID_DAY', columns='FEATURES',
                              values='VALUENUM', fill_value=np.nan)
         df3 = pd.pivot_table(df, index='HADMID_DAY', columns='FEATURES',
-                             values='VALUENUM', aggfunc=np.std, fill_value=0)
+                             values='VALUENUM', aggfunc=lambda x: np.std(x), fill_value=0)
         df3.columns = ["{0}_std".format(i) for i in list(df2.columns)]
         df4 = pd.pivot_table(df, index='HADMID_DAY', columns='FEATURES',
                              values='VALUENUM', aggfunc=np.amin, fill_value=np.nan)
@@ -451,10 +451,12 @@ if __name__ == '__main__':
     FILE_STR = 'CHARTEVENTS_reduced'
     mp = MimicParser()
 
-#    mp.reduce_total(ROOT + 'CHARTEVENTS.csv')
-#    mp.create_day_blocks(ROOT+ FOLDER + FILE_STR + '.csv')
-#    mp.add_admissions_columns(ROOT + FOLDER + FILE_STR + '_24_hour_blocks.csv')
-#    mp.add_patient_columns(ROOT + FOLDER + FILE_STR + '_24_hour_blocks_plus_admissions.csv')
+    #mp.reduce_total(ROOT + 'CHARTEVENTS.csv')
+    mp.create_day_blocks(ROOT+ FOLDER + FILE_STR + '.csv')
+    print("Initial")
+    mp.add_admissions_columns(ROOT + FOLDER + FILE_STR + '_24_hour_blocks.csv')
+    print("24")
+    mp.add_patient_columns(ROOT + FOLDER + FILE_STR + '_24_hour_blocks_plus_admissions.csv')
     mp.clean_prescriptions(ROOT + FOLDER + FILE_STR + 
                          '_24_hour_blocks_plus_admissions_plus_patients.csv')
     mp.add_prescriptions(ROOT + FOLDER + FILE_STR + 
