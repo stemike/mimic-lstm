@@ -354,7 +354,7 @@ def train(model_name="kaji_mach_0", synth_data=False, target='MI',
                       time_steps=time_steps)
 
   #init callbacks
-  tb_callback = TensorBoard(log_dir='./logs/{0}_{1}.log'.format(model_name, time),
+  tb_callback = TensorBoard(log_dir='./logs/{0}_{1}.log'.format(model_name, time()),
     histogram_freq=0,
     write_grads=False,
     write_images=True,
@@ -373,7 +373,7 @@ def train(model_name="kaji_mach_0", synth_data=False, target='MI',
     save_best_only=True,
     save_weights_only=False,
     mode='auto',
-    period=1)
+    save_freq=1)
 
   #fit
   model.fit(
@@ -491,12 +491,12 @@ if __name__ == "__main__":
     K.clear_session()
 
     train(model_name='kaji_mach_final_no_mask_VANCOMYCIN_pad14', epochs=14,
-          synth_data=False, predict=True, target='VANCOMYCIN', time_steps=14) 
+          synth_data=False, predict=True, target='VANCOMYCIN', time_steps=14)
 
     K.clear_session()
 
     train(model_name='kaji_mach_final_no_mask_SEPSIS_pad14', epochs=17,
-          synth_data=False, predict=True, target='SEPSIS', time_steps=14) 
+          synth_data=False, predict=True, target='SEPSIS', time_steps=14)
 
 
 ## REDUCE SAMPLE SIZES ##
@@ -506,50 +506,50 @@ if __name__ == "__main__":
     train(model_name='kaji_mach_final_no_mask_MI_pad14_80_percent', epochs=13,
           synth_data=False, predict=True, target='MI', time_steps=14,
           n_percentage=0.80)
-  
+
     K.clear_session()
-  
+
     train(model_name='kaji_mach_final_no_mask_MI_pad14_60_percent', epochs=13,
           synth_data=False, predict=True, target='MI', time_steps=14,
           n_percentage=0.60)
-  
+
     K.clear_session()
-  
+
     train(model_name='kaji_mach_final_no_mask_MI_pad14_40_percent', epochs=13,
           synth_data=False, predict=True, target='MI', time_steps=14,
           n_percentage=0.40)
-  
+
     K.clear_session()
-  
+
     train(model_name='kaji_mach_final_no_mask_MI_pad14_20_percent', epochs=13,
           synth_data=False, predict=True, target='MI', time_steps=14,
           n_percentage=0.20)
-  
+
     K.clear_session()
-  
+
     train(model_name='kaji_mach_final_no_mask_MI_pad14_10_percent', epochs=13,
           synth_data=False, predict=True, target='MI', time_steps=14,
           n_percentage=0.10)
-  
+
     K.clear_session()
-  
+
     train(model_name='kaji_mach_final_no_mask_MI_pad14_5_percent', epochs=13,
           synth_data=False, predict=True, target='MI', time_steps=14,
           n_percentage=0.05)
-  
+
     K.clear_session()
   
-# SEPSIS ##
- 
+# VANCOMYCIN ##
+
     train(model_name='kaji_mach_final_no_mask_VANCOMYCIN_pad14_80_percent',
           epochs=14,synth_data=False, predict=True, target='VANCOMYCIN',
-          time_steps=14, n_percentage=0.80) 
-  
+          time_steps=14, n_percentage=0.80)
+
     K.clear_session()
   
     train(model_name='kaji_mach_final_no_mask_VANCOMYCIN_pad14_60_percent',
           epochs=14, synth_data=False, predict=True, target='VANCOMYCIN',
-          time_steps=14, n_percentage=0.60) 
+          time_steps=14, n_percentage=0.60)
   
     K.clear_session()
   
@@ -575,7 +575,7 @@ if __name__ == "__main__":
           epochs=13, synth_data=False, predict=True, target='VANCOMYCIN',
           time_steps=14, n_percentage=0.05)
  
-# VANCOMYCIN ##
+# SEPSIS ##
  
     train(model_name='kaji_mach_final_no_mask_SEPSIS_pad14_80_percent',
           epochs=17, synth_data=False, predict=True, target='SEPSIS',
