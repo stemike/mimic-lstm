@@ -195,13 +195,13 @@ class MimicParser(object):
         for i, df_chunk in enumerate(pd.read_csv(filepath, iterator=True, chunksize=chunksize)):
             function = lambda x,y: x.union(y)
             df = df_chunk[df_chunk['ITEMID'].isin(reduce(function, pid.dictionary.values()))]
-            df_w = df.dropna(inplace=False, axis=0, subset=columns)
+            df.dropna(inplace=True, axis=0, subset=columns)
             if i == 0:
-                df_w.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
+                df.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
                           columns=columns)
                 print(i)
             else:
-                df_w.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
+                df.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
                           columns=columns, header=None, mode='a')
                 print(i)
             
@@ -451,17 +451,23 @@ if __name__ == '__main__':
     FILE_STR = 'CHARTEVENTS_reduced'
     mp = MimicParser()
 
-    #mp.reduce_total(ROOT + 'CHARTEVENTS.csv')
+    mp.reduce_total(ROOT + 'CHARTEVENTS.csv')
+    print("Created Chartevents")
     mp.create_day_blocks(ROOT+ FOLDER + FILE_STR + '.csv')
-    print("Initial")
+    print("Created Dayblocks")
     mp.add_admissions_columns(ROOT + FOLDER + FILE_STR + '_24_hour_blocks.csv')
-    print("24")
+    print("Created 24h blocks")
     mp.add_patient_columns(ROOT + FOLDER + FILE_STR + '_24_hour_blocks_plus_admissions.csv')
+    print("Created Plus Admission")
     mp.clean_prescriptions(ROOT + FOLDER + FILE_STR + 
                          '_24_hour_blocks_plus_admissions_plus_patients.csv')
+    print("Cleaned Plus Patients")
     mp.add_prescriptions(ROOT + FOLDER + FILE_STR + 
                          '_24_hour_blocks_plus_admissions_plus_patients.csv')
-    mp.add_icd_infect(ROOT + FOLDER + FILE_STR + '_24_hour_blocks_plus_admissions_plus_patients_plus_scripts.csv') 
-    mp.add_notes(ROOT + FOLDER + FILE_STR + '_24_hour_blocks_plus_admissions_plus_patients_plus_scripts_plus_icds.csv')    
+    print("Created Plus Patients")
+    mp.add_icd_infect(ROOT + FOLDER + FILE_STR + '_24_hour_blocks_plus_admissions_plus_patients_plus_scripts.csv')
+    print("Created Plus Scripts")
+    mp.add_notes(ROOT + FOLDER + FILE_STR + '_24_hour_blocks_plus_admissions_plus_patients_plus_scripts_plus_icds.csv')
+    print("Created Plus ICDS")
 
 

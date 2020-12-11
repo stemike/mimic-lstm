@@ -373,7 +373,7 @@ def train(model_name="kaji_mach_0", synth_data=False, target='MI',
     save_best_only=True,
     save_weights_only=False,
     mode='auto',
-    save_freq=1)
+    period=1)
 
   #fit
   model.fit(
@@ -481,7 +481,7 @@ if __name__ == "__main__":
     pickle_objects(target='SEPSIS', time_steps=14)
     K.clear_session()
     pickle_objects(target='VANCOMYCIN', time_steps=14)
-
+    print("Created Datasets")
 ## BIG THREE ##
 
     K.clear_session()
@@ -498,7 +498,7 @@ if __name__ == "__main__":
     train(model_name='kaji_mach_final_no_mask_SEPSIS_pad14', epochs=17,
           synth_data=False, predict=True, target='SEPSIS', time_steps=14)
 
-
+    print("Trained Big 3")
 ## REDUCE SAMPLE SIZES ##
 
 ## MI ##
@@ -538,6 +538,7 @@ if __name__ == "__main__":
           n_percentage=0.05)
 
     K.clear_session()
+    print("Trained MI")
   
 # VANCOMYCIN ##
 
@@ -574,7 +575,8 @@ if __name__ == "__main__":
     train(model_name='kaji_mach_final_no_mask_VANCOMYCIN_pad14_5_percent',
           epochs=13, synth_data=False, predict=True, target='VANCOMYCIN',
           time_steps=14, n_percentage=0.05)
- 
+    print("Trained VANCOMYCIN")
+
 # SEPSIS ##
  
     train(model_name='kaji_mach_final_no_mask_SEPSIS_pad14_80_percent',
@@ -610,4 +612,4 @@ if __name__ == "__main__":
     train(model_name='kaji_mach_final_no_mask_SEPSIS_pad14_5_percent',
           epochs=13, synth_data=False, predict=True, target='SEPSIS',
           time_steps=14, n_percentage=0.05)
-
+    print("Trained VANCOMYCIN")
