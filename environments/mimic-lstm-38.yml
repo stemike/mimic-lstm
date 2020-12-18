@@ -166,4 +166,3 @@ dependencies:
     - tensorflow-estimator==2.4.0
     - termcolor==1.1.0
     - wrapt==1.12.1
-prefix: C:\Users\moser\anaconda3\envs\mimic-lstm
