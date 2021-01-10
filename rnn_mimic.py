@@ -8,6 +8,8 @@ import pickle
 
 import numpy as np
 import pandas as pd
+import torch
+
 from pad_sequences import PadSequences
 #from processing_utilities import PandasUtilities
 from attention_function import attention_3d_block as Attention 
@@ -475,13 +477,15 @@ def pickle_objects(target='MI', time_steps=14):
 
 
 if __name__ == "__main__":
-
-    pickle_objects(target='MI', time_steps=14)#
-    K.clear_session()
-    pickle_objects(target='SEPSIS', time_steps=14)
-    K.clear_session()
-    pickle_objects(target='VANCOMYCIN', time_steps=14)
-    print("Created Datasets")
+    print(f"{torch.cuda.is_available()=}")
+    raise Exception()
+    if False:
+        pickle_objects(target='MI', time_steps=14)#
+        K.clear_session()
+        pickle_objects(target='SEPSIS', time_steps=14)
+        K.clear_session()
+        pickle_objects(target='VANCOMYCIN', time_steps=14)
+        print("Created Datasets")
 ## BIG THREE ##
 
     K.clear_session()
