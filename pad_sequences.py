@@ -11,7 +11,7 @@ class PadSequences(object):
     def pad(self, df, lb, time_steps, pad_value=-100):
 
         ''' Takes a file path for the dataframe to operate on. lb is a lower bound to discard 
-            ub is an upper bound to truncate on. All entries are padded to their ubber bound '''
+            ub is an upper bound to truncate on. All entries are padded to their upper bound '''
 
         #df = pd.read_csv(path):
         self.uniques = pd.unique(df['HADM_ID'])
