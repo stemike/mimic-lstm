@@ -1,13 +1,5 @@
 import numpy as np
-import pandas as pd
-import keras.backend as K
-from keras.layers import multiply
-from keras.layers.core import Dense, Reshape, Lambda, RepeatVector, Permute, Flatten
-from keras.layers.recurrent import LSTM
-from keras.models import Model, Input
 
-# plot part.
-import matplotlib.pyplot as plt
 
 
 # ## Helper functions
@@ -16,7 +8,7 @@ def get_activations(model, inputs, print_shape_only=False, layer_name=None, verb
     """
     Get activations from a model
     Args:
-        model: a keras model
+        model: a pytorch model
         inputs: the inputs for the model
         print_shape_only: whether to print the shape of the layer or the whole activation layer
         layer_name: name of specific layer to return
@@ -106,7 +98,6 @@ def attention_spatial_block(inputs):
 def model_attention_applied_before_lstm():
     inputs = Input(shape=(TIME_STEPS, INPUT_DIM,))
     attention_mul = attention_3d_block(inputs)
-    # attention_mul = attention_spatial_block(inputs)
     lstm_units = 32
     attention_mul = LSTM(lstm_units, return_sequences=False)(attention_mul)
     output = Dense(1, activation='sigmoid')(attention_mul)

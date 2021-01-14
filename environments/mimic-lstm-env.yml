@@ -1,0 +1,22 @@
+name: mimic-lstm
+channels:
+  - conda-forge
+  - defaults
+  - pytorch
+dependencies:
+  - python=3.8
+  - pip
+  - notebook
+  - jupyterlab
+  - matplotlib
+  - numpy
+  - pandas
+  - pickle
+  - scipy
+  - scikit-learn
+  - seaborn
+  - pytorch=1.7.0
+  - torchvision
+  - torchaudio
+  - cudatoolkit=11.0
+  
