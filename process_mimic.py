@@ -171,8 +171,7 @@ class MimicParser(object):
         pid = ParseItemID()
         pid.build_dictionary()
         chunksize = 10000000
-        columns = ['SUBJECT_ID', 'HADM_ID', 'ICUSTAY_ID', 'ITEMID', 'CHARTTIME', 'VALUE',
-                   'VALUENUM']
+        columns = ['SUBJECT_ID', 'HADM_ID', 'ICUSTAY_ID', 'ITEMID', 'CHARTTIME', 'VALUE', 'VALUENUM']
 
         for i, df_chunk in enumerate(pd.read_csv(filepath, iterator=True, chunksize=chunksize)):
             function = lambda x, y: x.union(y)
@@ -181,11 +180,10 @@ class MimicParser(object):
             if i == 0:
                 df.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
                           columns=columns)
-                print(i)
             else:
                 df.to_csv(ROOT + './mapped_elements/CHARTEVENTS_reduced.csv', index=False,
                           columns=columns, header=None, mode='a')
-                print(i)
+            print(i)
 
     def create_day_blocks(self, file_name):
 
