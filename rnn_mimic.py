@@ -18,6 +18,10 @@ def get_targets():
     return ['MI', 'SEPSIS', 'VANCOMYCIN']
 
 
+def get_percentages():
+    return [1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.05]
+
+
 def get_pickle_path():
     '''
 
@@ -84,8 +88,8 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
     X_TRAIN = X_TRAIN[0:int(n_percentage * X_TRAIN.shape[0])]  # Subsample if necessary
     Y_TRAIN = Y_TRAIN[0:int(n_percentage * Y_TRAIN.shape[0])]
 
-    #mask = X_TRAIN == 0
-    #seq_lengths = torch.tensor(np.where(mask.any(1), mask.argmax(1), X_TRAIN.shape[1]))
+    # mask = X_TRAIN == 0
+    # seq_lengths = torch.tensor(np.where(mask.any(1), mask.argmax(1), X_TRAIN.shape[1]))
 
     x_train_tensor = torch.tensor(X_TRAIN, dtype=torch.float)
     y_train_tensor = torch.tensor(Y_TRAIN, dtype=torch.float)
@@ -97,14 +101,14 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
     train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=True)
 
-    model = ICU_LSTM(no_feature_cols).to(device)
+    model = ICU_LSTM(no_feature_cols, time_steps).to(device)
     optimizer = RMSprop(model.parameters(), lr=lr, alpha=0.9)
     loss_fn = nn.BCELoss()
     writer = SummaryWriter(log_dir='./logs/{0}_{1}.log'.format(model_name, time()))
 
     best_val_loss = 1e10
     for epoch in range(1, epochs + 1):
-        print(f'\rEpoch {epoch:02d} out of {epochs}', end =" ")
+        print(f'\rEpoch {epoch:02d} out of {epochs}', end=" ")
 
         model.train()
         train_loss = []
@@ -112,7 +116,7 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
             x = x.to(device)
             y = y.to(device)
             optimizer.zero_grad()
-            output = model(x, None)
+            output, _ = model(x, None)
             loss = loss_fn(output, y)
             loss.backward()
             optimizer.step()
@@ -121,17 +125,18 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
 
         model.eval()
         val_loss = []
-        for x, y in val_dataloader:
-            x = x.to(device)
-            y = y.to(device)
-            output = model(x, None)
-            val_loss.append(loss_fn(output, y).item())
+        with torch.no_grad():
+            for x, y in val_dataloader:
+                x = x.to(device)
+                y = y.to(device)
+                output, _ = model(x, None)
+                val_loss.append(loss_fn(output, y).item())
         val_loss = np.mean(val_loss)
         writer.add_scalar('Loss/val', val_loss, epoch)
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
-            torch.save(model, checkpoint_dir + f'/model.{epoch:02d}-{val_loss:.2f}.hdf5')
+            torch.save(model, checkpoint_dir + f'/{model_name}.h5')
 
     torch.save(model, './saved_models/{0}.h5'.format(model_name))
 
@@ -149,8 +154,8 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
 def pickle_objects(target='MI', time_steps=14):
     (X_TRAIN, X_VAL, Y_TRAIN, Y_VAL, no_feature_cols,
      X_TEST, Y_TEST, x_boolmat_test, y_boolmat_test,
-     x_boolmat_val, y_boolmat_val) = return_data(balancer=True, target=target,
-                                                 pad=True, split=True, time_steps=time_steps)
+     x_boolmat_val, y_boolmat_val) = return_data(balancer=True, target=target, pad=True,
+                                                 split=True, time_steps=time_steps)
 
     features = return_data(return_cols=True, target=target, pad=True, split=True, time_steps=time_steps)
 
@@ -178,7 +183,7 @@ def main(create_data=False):
     Returns:
 
     """
-    percentages = [1.0, 0.8, 0.6, 0.4, 0.2, 0.1, 0.05]
+    percentages = get_percentages()
     epochs = 13
     time_steps = 14
 
@@ -191,7 +196,7 @@ def main(create_data=False):
         device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
         print(f'Training Models using {device}')
         for target in get_targets():
-            print(f'Training {target}')
+            print(f'\nTraining {target}')
             for percentage in percentages:
                 p = int(percentage * 100)
                 model_name = f'kaji_mach_final_no_mask_{target}_pad14_{p}_percent'
@@ -199,7 +204,7 @@ def main(create_data=False):
                       target=target, time_steps=time_steps, n_percentage=percentage)
 
                 torch.cuda.empty_cache()
-                print(f'Finished {percentage}\n')
+                print(f'\rFinished training on {percentage * 100}% of data')
 
 
 if __name__ == "__main__":
