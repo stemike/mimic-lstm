@@ -1,21 +1,17 @@
 import math
 import os
 import pickle
-from time import time
 
 import numpy as np
-import torch.nn.functional as F
 import torch
+import torch.nn.functional as F
 from sklearn.metrics import confusion_matrix, accuracy_score, roc_auc_score, classification_report
-from torch import nn
-from torch.nn.utils.rnn import pack_padded_sequence
 from torch.optim import RMSprop
 from torch.utils.data import TensorDataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
 from modules.data_handler import load_data
 from modules.model import ICU_LSTM
-from modules.pad_sequences import get_seq_length_from_padded_seq
 
 
 def get_targets():
@@ -108,7 +104,7 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
 
     model = ICU_LSTM(no_feature_cols, time_steps).to(device)
     optimizer = RMSprop(model.parameters(), lr=lr, alpha=0.9)
-    writer = SummaryWriter(log_dir='./logs/{0}_{1}.log'.format(model_name, time()))
+    writer = SummaryWriter(log_dir='./logs/{0}.log'.format(model_name))
 
     best_val_loss = math.inf
     for epoch in range(1, epochs + 1):
