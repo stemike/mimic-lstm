@@ -1,5 +1,8 @@
 import torch
 from torch import nn
+from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
+
+from modules.pad_sequences import get_seq_length_from_padded_seq
 
 
 class ICU_LSTM(nn.Module):
@@ -22,13 +25,19 @@ class ICU_LSTM(nn.Module):
         a = self.attention_layer(torch.transpose(x, 1, 2))
         a = torch.softmax(a, dim=2)
         a = torch.transpose(a, 1, 2)
+        # Save a to attention variable for being able to return it later
         self.attention = a.clone().detach().cpu().numpy()
-        x *= a
+        x = a * x
+
+        # seq_lengths = get_seq_length_from_padded_seq(x.clone().detach().cpu().numpy())
+        # x = pack_padded_sequence(x, seq_lengths, batch_first=True, enforce_sorted=False)
         if h_c is None:
             intermediate, hidden = self.lstm(x)
         else:
             h, c = h_c
-            intermediate, hidden = self.lstm(x, h, c)
+            intermediate, h_c = self.lstm(x, h, c)
+        # intermediate, _ = pad_packed_sequence(intermediate, batch_first=True, padding_value=0, total_length=14)
+
         intermediate = self.dense(intermediate)
         output = torch.sigmoid(intermediate)
-        return output, hidden
+        return output, h_c

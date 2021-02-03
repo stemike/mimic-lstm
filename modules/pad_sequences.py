@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+import torch
 
 
 class PadSequences(object):
@@ -44,3 +45,15 @@ class PadSequences(object):
         matrix = np.concatenate([x_matrix, y_matrix], axis=2)
 
         return matrix
+
+
+def get_seq_length_from_padded_seq(sequence):
+    max_len = sequence.shape[1]
+    length_list = []
+    for item in sequence:
+        length = max_len
+        indices = np.where(~item.any(axis=1))[0]
+        if len(indices) > 0:
+            length = indices[0]
+        length_list.append(length)
+    return torch.tensor(length_list)
