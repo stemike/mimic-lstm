@@ -12,6 +12,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 from modules.data_handler import load_data
 from modules.model import ICU_LSTM
+from time import time
 
 
 def get_targets():
@@ -59,7 +60,7 @@ def print_reports(Y_PRED, Y_VAL):
 
 
 def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=False,
-          n_percentage=1.0, time_steps=14, epochs=10, batch_size=16, lr=0.001, device='cpu'):
+          n_percentage=1.0, epochs=10, batch_size=16, lr=0.001, device='cpu'):
     """
 
   Training the model using parameter inputs
@@ -94,19 +95,21 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
     y_train_tensor = torch.tensor(Y_TRAIN, dtype=torch.float)
     x_val_tensor = torch.tensor(X_VAL, dtype=torch.float)
     y_val_tensor = torch.tensor(Y_VAL, dtype=torch.float)
-    weight_train_tensor = torch.tensor(y_train_boolmat)
-    weight_val_tensor = torch.tensor(y_val_boolmat)
+    weight_train_tensor = torch.tensor(~y_train_boolmat)
+    weight_val_tensor = torch.tensor(~y_val_boolmat)
 
     train_dataset = TensorDataset(x_train_tensor, y_train_tensor)
     val_dataset = TensorDataset(x_val_tensor, y_val_tensor)
-    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
+    val_dataloader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=False)
 
-    model = ICU_LSTM(no_feature_cols, time_steps).to(device)
+    model = ICU_LSTM(no_feature_cols).to(device)
     optimizer = RMSprop(model.parameters(), lr=lr, alpha=0.9)
-    writer = SummaryWriter(log_dir='./logs/{0}.log'.format(model_name))
+    writer = SummaryWriter(log_dir=f'./logs/{model_name}_{time()}.log')
 
     best_val_loss = math.inf
+    n_samples_train = X_TRAIN.shape[0]
+    n_samples_val = X_VAL.shape[0]
     for epoch in range(1, epochs + 1):
         print(f'\rEpoch {epoch:02d} out of {epochs} with loss {best_val_loss}', end=" ")
 
@@ -114,7 +117,10 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
         train_loss = []
         batch_num = 0
         for x, y in train_dataloader:
-            weights = weight_train_tensor[batch_num * batch_size:(batch_num + 1) * batch_size].to(device)
+            index_end = (batch_num + 1) * batch_size
+            if index_end > n_samples_train:
+                index_end = n_samples_train
+            weights = weight_train_tensor[batch_num * batch_size:index_end].to(device)
             x = x.to(device)
             y = y.to(device)
             optimizer.zero_grad()
@@ -131,11 +137,15 @@ def train(model_name="kaji_mach_0", target='MI', predict=False, return_model=Fal
         batch_num = 0
         with torch.no_grad():
             for x, y in val_dataloader:
-                weights = weight_val_tensor[batch_num * batch_size:(batch_num + 1) * batch_size].to(device)
+                index_end = (batch_num + 1) * batch_size
+                if index_end > n_samples_val:
+                    index_end = n_samples_val
+                weights = weight_val_tensor[batch_num * batch_size:index_end].to(device)
+
                 x = x.to(device)
                 y = y.to(device)
                 output, _ = model(x)
-                val_loss.append(F.binary_cross_entropy(output, y).item()) # , weight=weights
+                val_loss.append(F.binary_cross_entropy(output, y).item()) #, weight=weights
                 batch_num += 1
         val_loss = np.mean(val_loss)
         writer.add_scalar('Loss/val', val_loss, epoch)
@@ -193,15 +203,15 @@ def main(create_data=False, seed=42):
 
     """
     percentages = get_percentages()
-    epochs = 13
-    time_steps = 14
 
     if create_data:
+        time_steps = 14
         print('Creating  Datasets')
         for target in get_targets():
             pickle_objects(target=target, time_steps=time_steps)
             print(f'Created Datasets for {target}')
     else:
+        epochs = 13
         device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
         torch.manual_seed(seed)
         print(f'Training Models using {device}')
@@ -211,11 +221,11 @@ def main(create_data=False, seed=42):
                 p = int(percentage * 100)
                 model_name = f'kaji_mach_final_no_mask_{target}_pad14_{p}_percent'
                 train(model_name=model_name, epochs=epochs, predict=False, device=device,
-                      target=target, time_steps=time_steps, n_percentage=percentage)
+                      target=target, n_percentage=percentage)
 
                 torch.cuda.empty_cache()
                 print(f'\rFinished training on {percentage * 100}% of data')
-    print("Programm finished")
+    print("Program finished")
 
 
 if __name__ == "__main__":
