@@ -34,6 +34,9 @@ class ICU_LSTM(nn.Module):
         for t in b:
             nn.init.constant_(t, 0)
             # Reproducing Keras' unit_forget_bias parameter
+            # https://discuss.pytorch.org/t/set-forget-gate-bias-of-lstm/1745
+            # It’s not super convenient, but we guarantee that a bias vector of each LSTM layer is structured like this:
+            # [b_ig | b_fg | b_gg | b_og]
             n = t.size(0)
             start, end = n // 4, n // 2
             t[start:end].fill_(1.)
@@ -46,15 +49,23 @@ class ICU_LSTM(nn.Module):
         self.attention = a.clone().detach().cpu().numpy()
         x = a * x
 
-        #seq_lengths = get_seq_length_from_padded_seq(x.clone().detach().cpu().numpy())
-        #x = pack_padded_sequence(x, seq_lengths, batch_first=True, enforce_sorted=False)
+        seq_lengths = get_seq_length_from_padded_seq(x.clone().detach().cpu().numpy())
+        x = pack_padded_sequence(x, seq_lengths, batch_first=True, enforce_sorted=False)
         if h_c is None:
             intermediate, h_c = self.lstm(x)
         else:
             h, c = h_c
             intermediate, h_c = self.lstm(x, h, c)
-        #intermediate, _ = pad_packed_sequence(intermediate, batch_first=True, padding_value=0, total_length=14)
+        intermediate, _ = pad_packed_sequence(intermediate, batch_first=True, padding_value=0, total_length=14)
 
         intermediate = self.dense(intermediate)
+
+        # Manually recreate Keras Masking
+        # In Keras masking a mask means the last non-masked input is used
+        for i in range(len(seq_lengths)):
+            pad_i = seq_lengths[i]
+            intermediate[i, pad_i:, :] = intermediate[i, pad_i - 1, :]
+
         output = torch.sigmoid(intermediate)
+
         return output, h_c
