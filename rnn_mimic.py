@@ -171,9 +171,9 @@ def pickle_objects(target='MI', time_steps=14):
     (X_TRAIN, X_VAL, Y_TRAIN, Y_VAL, no_feature_cols,
      X_TEST, Y_TEST, x_boolmat_test, y_boolmat_test,
      x_boolmat_val, y_boolmat_val, x_boolmat_train,
-     y_boolmat_train) = load_data(balancer=True, target=target, pad=True, split=True, time_steps=time_steps)
+     y_boolmat_train) = load_data(balancer=True, target=target, pad=True, split=True, time_steps=time_steps, mimic_version=4)
 
-    features = load_data(return_cols=True, target=target, pad=True, split=True, time_steps=time_steps)
+    features = load_data(return_cols=True, target=target, pad=True, split=True, time_steps=time_steps, mimic_version=4)
 
     file_path = get_pickle_path()
     dump_pickle(X_TRAIN, file_path.format('X_TRAIN', target))
@@ -192,7 +192,7 @@ def pickle_objects(target='MI', time_steps=14):
     dump_pickle(features, file_path.format('features', target))
 
 
-def main(create_data=False, seed=42):
+def main(create_data=True, seed=42):
     """
 
     Args:

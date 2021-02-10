@@ -3,7 +3,7 @@ import pandas as pd
 
 from modules.pad_sequences import PadSequences
 
-ROOT = "./mimic_database/mapped_elements/"
+ROOT = "./mimic_{0}_database/mapped_elements/"
 FILE = "CHARTEVENTS_reduced_24_hour_blocks_plus_admissions_plus_patients_plus_scripts_plus_icds_plus_notes.csv"
 
 def wbc_crit(x):
@@ -39,7 +39,7 @@ def get_synth_sequence(n_timesteps=14):
 
 def load_data(balancer=True, target='MI', return_cols=False, tt_split=0.7,
               val_percentage=0.8, dataframe=False, time_steps=14,
-              split=True, pad=True, seed=42):
+              split=True, pad=True, seed=42, mimic_version=3):
     """
       Returns synthetic or real data depending on parameter
 
@@ -60,7 +60,7 @@ def load_data(balancer=True, target='MI', return_cols=False, tt_split=0.7,
 
       """
     np.random.seed(seed)
-    df = pd.read_csv(ROOT + FILE)
+    df = pd.read_csv(ROOT.format(mimic_version) + FILE)
 
     # Delete features that make the task trivial
     if target == 'MI':

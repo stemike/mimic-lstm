@@ -5,7 +5,7 @@ from functools import reduce
 import numpy as np
 import pandas as pd
 
-ROOT = "./mimic_database/"
+ROOT = "./mimic_3_database/"
 
 
 ## Utilities ##
@@ -194,6 +194,7 @@ class MimicParser(object):
         pid.reverse_dictionary(pid.dictionary)
         df = pd.read_csv(file_name)
         df['CHARTDAY'] = df['CHARTTIME'].astype('str').str.split(' ').apply(lambda x: x[0])
+
         df['HADMID_DAY'] = df['HADM_ID'].astype('str') + '_' + df['CHARTDAY']
         df['FEATURES'] = df['ITEMID'].apply(lambda x: pid.rev[x])
         self.hadm_dict = dict(zip(df['HADMID_DAY'], df['SUBJECT_ID']))
@@ -233,6 +234,7 @@ class MimicParser(object):
             df2[i].fillna(df2[i].median(), inplace=True)
 
         df2['HADMID_DAY'] = df2.index
+
         df2['INR'] = df2['INR'] + df2['PT']
         df2['INR_std'] = df2['INR_std'] + df2['PT_std']
         df2['INR_min'] = df2['INR_min'] + df2['PT_min']
@@ -248,7 +250,7 @@ class MimicParser(object):
 
         ''' Add demographic columns to create_day_blocks '''
 
-        df = pd.read_csv('./mimic_database/ADMISSIONS.csv')
+        df = pd.read_csv(f'{ROOT}/ADMISSIONS.csv')
         ethn_dict = dict(zip(df['HADM_ID'], df['ETHNICITY']))
         admittime_dict = dict(zip(df['HADM_ID'], df['ADMITTIME']))
         df_shard = pd.read_csv(file_name)
@@ -266,7 +268,7 @@ class MimicParser(object):
 
         ''' Add demographic columns to create_day_blocks '''
 
-        df = pd.read_csv('./mimic_database/PATIENTS.csv')
+        df = pd.read_csv(f'{ROOT}/PATIENTS.csv')
 
         dob_dict = dict(zip(df['SUBJECT_ID'], df['DOB']))
         gender_dict = dict(zip(df['SUBJECT_ID'], df['GENDER']))
@@ -302,15 +304,15 @@ class MimicParser(object):
 
         pid.prescriptions.dropna(how='any', axis=0, inplace=True, subset=['DRUG_FEATURE'])
 
-        pid.prescriptions.to_csv('./mimic_database/PRESCRIPTIONS_reduced.csv', index=False)
+        pid.prescriptions.to_csv(f'{ROOT}/PRESCRIPTIONS_reduced.csv', index=False)
 
     def add_prescriptions(self, file_name):
 
         df_file = pd.read_csv(file_name)
 
-        with open('./mimic_database/PRESCRIPTIONS_reduced.csv', 'r') as f:
+        with open(f'{ROOT}/PRESCRIPTIONS_reduced.csv', 'r') as f:
             csvreader = csv.reader(f)
-            with open('./mimic_database/PRESCRIPTIONS_reduced_byday.csv', 'w') as g:
+            with open(f'{ROOT}/PRESCRIPTIONS_reduced_byday.csv', 'w') as g:
                 csvwriter = csv.writer(g)
                 first_line = csvreader.__next__()
                 print(first_line[0:3] + ['CHARTDAY'] + [first_line[6]])
@@ -319,7 +321,7 @@ class MimicParser(object):
                     for i in pd.date_range(row[3], row[4]).strftime('%Y-%m-%d'):
                         csvwriter.writerow(row[0:3] + [i] + [row[6]])
 
-        df = pd.read_csv('./mimic_database/PRESCRIPTIONS_reduced_byday.csv')
+        df = pd.read_csv(f'{ROOT}/PRESCRIPTIONS_reduced_byday.csv')
         df['CHARTDAY'] = df['CHARTDAY'].str.split(' ').apply(lambda x: x[0])
         df['HADMID_DAY'] = df['HADM_ID'].astype('str') + '_' + df['CHARTDAY']
         df['VALUE'] = 1
@@ -344,8 +346,8 @@ class MimicParser(object):
 
     def add_icd_infect(self, file_name):
 
-        df_icd = pd.read_csv('./mimic_database/PROCEDURES_ICD.csv')
-        df_micro = pd.read_csv('./mimic_database/MICROBIOLOGYEVENTS.csv')
+        df_icd = pd.read_csv(f'{ROOT}/PROCEDURES_ICD.csv')
+        df_micro = pd.read_csv(f'{ROOT}/MICROBIOLOGYEVENTS.csv')
         self.suspect_hadmid = set(pd.unique(df_micro['HADM_ID']).tolist())
         df_icd_ckd = df_icd[df_icd['ICD9_CODE'] == 585]
 
@@ -357,7 +359,7 @@ class MimicParser(object):
         df.to_csv(file_name[0:-4] + '_plus_icds.csv', index=False)
 
     def add_notes(self, file_name):
-        df = pd.read_csv('./mimic_database/NOTEEVENTS.csv')
+        df = pd.read_csv(f'{ROOT}/NOTEEVENTS.csv')
         df_rad_notes = df[['TEXT', 'HADM_ID']][df['CATEGORY'] == 'Radiology']
         CTA_bool_array = df_rad_notes['TEXT'].str.contains('CTA', flags=re.IGNORECASE)
         CT_angiogram_bool_array = df_rad_notes['TEXT'].str.contains('CT angiogram', flags=re.IGNORECASE)
@@ -383,7 +385,7 @@ def main():
     FILE_STR = 'CHARTEVENTS_reduced'
     mp = MimicParser()
 
-    mp.reduce_total(ROOT + 'CHARTEVENTS.csv')
+    #mp.reduce_total(ROOT + 'CHARTEVENTS.csv')
     print("Created Chartevents")
     mp.create_day_blocks(ROOT + FOLDER + FILE_STR + '.csv')
     print("Created Dayblocks")
