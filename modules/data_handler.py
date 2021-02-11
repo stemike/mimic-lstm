@@ -64,8 +64,8 @@ def load_data(balancer=True, target='MI', return_cols=False, tt_split=0.7,
 
     # Delete features that make the task trivial
     if target == 'MI':
-        df[target] = ((df['troponin'] > 0.4) & (df['CKD'] == 0)).apply(lambda x: int(x))
-        toss = ['ct_angio', 'troponin', 'troponin_std', 'troponin_min', 'troponin_max', 'Infection', 'CKD']
+        df[target] = ((df['troponin'] > 0.4) & (df['ckd'] == 0)).apply(lambda x: int(x))
+        toss = ['ct_angio', 'troponin', 'troponin_std', 'troponin_min', 'troponin_max', 'infection', 'ckd']
     elif target == 'SEPSIS':
         df['hr_sepsis'] = df['heart rate'].apply(lambda x: 1 if x > 90 else 0)
         df['respiratory rate_sepsis'] = df['respiratory rate'].apply(lambda x: 1 if x > 20 else 0)
@@ -73,18 +73,18 @@ def load_data(balancer=True, target='MI', return_cols=False, tt_split=0.7,
         df['temperature f_sepsis'] = df['temperature (F)'].apply(temp_crit)
         df['sepsis_points'] = (df['hr_sepsis'] + df['respiratory rate_sepsis']
                                + df['wbc_sepsis'] + df['temperature f_sepsis'])
-        df[target] = ((df['sepsis_points'] >= 2) & (df['Infection'] == 1)).apply(lambda x: int(x))
+        df[target] = ((df['sepsis_points'] >= 2) & (df['infection'] == 1)).apply(lambda x: int(x))
         del df['hr_sepsis']
         del df['respiratory rate_sepsis']
         del df['wbc_sepsis']
         del df['temperature f_sepsis']
         del df['sepsis_points']
-        del df['Infection']
-        toss = ['ct_angio', 'Infection', 'CKD']
+        del df['infection']
+        toss = ['ct_angio', 'infection', 'ckd']
     elif target == 'VANCOMYCIN':
         df['VANCOMYCIN'] = df['vancomycin'].apply(lambda x: 1 if x > 0 else 0)
         del df['vancomycin']
-        toss = ['ct_angio', 'Infection', 'CKD']
+        toss = ['ct_angio', 'infection', 'ckd']
 
     df = df.select_dtypes(exclude=['object'])
 
@@ -92,14 +92,13 @@ def load_data(balancer=True, target='MI', return_cols=False, tt_split=0.7,
     COLUMNS = [i for i in COLUMNS if i not in toss]
     COLUMNS.remove(target)
 
-    if 'HADM_ID' in COLUMNS:
-        COLUMNS.remove('HADM_ID')
-    if 'SUBJECT_ID' in COLUMNS:
-        COLUMNS.remove('SUBJECT_ID')
-    if 'YOB' in COLUMNS:
-        COLUMNS.remove('YOB')
-    if 'ADMITYEAR' in COLUMNS:
-        COLUMNS.remove('ADMITYEAR')
+    toss = ['hadm_id', 'subject_id', 'yob', 'admityear']
+
+    for col in toss:
+        if col in COLUMNS:
+            COLUMNS.remove(col)
+
+    print("Removed Columns")
 
     if return_cols:
         return COLUMNS
@@ -110,7 +109,9 @@ def load_data(balancer=True, target='MI', return_cols=False, tt_split=0.7,
         print('There are {0} rows in the df after padding'.format(len(df)))
 
     if dataframe:
-        return (df[COLUMNS + [target, "HADM_ID"]])
+        return (df[COLUMNS + [target, "hadm_id"]])
+
+    print("Creating Matrices")
 
     MATRIX = df[COLUMNS + [target]].values
     MATRIX = MATRIX.reshape(int(MATRIX.shape[0] / time_steps), time_steps, MATRIX.shape[1])
@@ -161,7 +162,7 @@ def load_data(balancer=True, target='MI', return_cols=False, tt_split=0.7,
 
     X_TEST[x_test_boolmat] = pad_value
     Y_TEST[y_test_boolmat] = pad_value
-
+    print("Created Matrices")
     if balancer:
         TRAIN = np.concatenate([X_TRAIN, Y_TRAIN], axis=2)
         print(np.where((TRAIN[:, :, -1] == 1).any(axis=1))[0])

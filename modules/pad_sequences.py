@@ -10,17 +10,17 @@ class PadSequences(object):
     def __init__(self):
         self.name = 'padder'
 
-    def pad(self, df, lb, time_steps, pad_value=-100):
+    def pad(self, df, lb, time_steps, pad_value=-100, id_col='hadm_id'):
         ''' Takes a file path for the dataframe to operate on. lb is a lower bound to discard
             ub is an upper bound to truncate on. All entries are padded to their upper bound '''
-
-        self.uniques = pd.unique(df['HADM_ID'])
-        df = df.groupby('HADM_ID').filter(lambda group: len(group) > lb).reset_index(drop=True)
-        df = df.groupby('HADM_ID').apply(lambda group: group[0:time_steps]).reset_index(drop=True)
-        df = df.groupby('HADM_ID').apply(lambda group: pd.concat(
+        print("Start Padding")
+        self.uniques = pd.unique(df[id_col])
+        df = df.groupby(id_col).filter(lambda group: len(group) > lb).reset_index(drop=True)
+        df = df.groupby(id_col).apply(lambda group: group[0:time_steps]).reset_index(drop=True)
+        df = df.groupby(id_col).apply(lambda group: pd.concat(
             [group, pd.DataFrame(pad_value * np.ones((time_steps - len(group), len(df.columns))), columns=df.columns)],
             axis=0)).reset_index(drop=True)
-
+        print("Finished Padding")
         return df
 
     def ZScoreNormalize(self, matrix):
