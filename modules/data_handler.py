@@ -175,16 +175,12 @@ def load_data(balancer=True, target='MI', return_cols=False, tt_split=0.7,
         length = min(pos_ind.shape[0], neg_ind.shape[0])
         total_ind = np.hstack([pos_ind[0:length], neg_ind[0:length]])
         np.random.shuffle(total_ind)
-        if target == 'MI':
-            ind = pos_ind
-        else:
-            ind = total_ind
-        X_TRAIN = TRAIN[ind, :, 0:-1]
-        Y_TRAIN = TRAIN[ind, :, -1]
+        X_TRAIN = TRAIN[total_ind, :, 0:-1]
+        Y_TRAIN = TRAIN[total_ind, :, -1]
         Y_TRAIN = Y_TRAIN.reshape(Y_TRAIN.shape[0], Y_TRAIN.shape[1], 1)
 
-        x_train_boolmat = x_train_boolmat[ind]
-        y_train_boolmat = y_train_boolmat[ind]
+        x_train_boolmat = x_train_boolmat[total_ind]
+        y_train_boolmat = y_train_boolmat[total_ind]
 
     no_feature_cols = X_TRAIN.shape[2]
 
