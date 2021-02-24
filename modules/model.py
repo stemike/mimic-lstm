@@ -41,21 +41,21 @@ class ICU_LSTM(nn.Module):
             start, end = n // 4, n // 2
             t[start:end].fill_(1.)
 
-    def forward(self, x, h_c=None):
+    def forward(self, features, h_c=None):
         # x is of shape batch_size x seq_length x n_features
-        a = self.attention_layer(x)
-        a = torch.softmax(a, dim=1)
+        attention = self.attention_layer(features)
+        attention = torch.softmax(attention, dim=1)
         # Save a to attention variable for being able to return it later
-        self.attention = a.clone().detach().cpu().numpy()
-        x = a * x
+        self.attention = attention.clone().detach().cpu().numpy()
+        features = attention * features
 
-        seq_lengths = get_seq_length_from_padded_seq(x.clone().detach().cpu().numpy())
-        x = pack_padded_sequence(x, seq_lengths, batch_first=True, enforce_sorted=False)
+        seq_lengths = get_seq_length_from_padded_seq(features.clone().detach().cpu().numpy())
+        features = pack_padded_sequence(features, seq_lengths, batch_first=True, enforce_sorted=False)
         if h_c is None:
-            intermediate, h_c = self.lstm(x)
+            intermediate, h_c = self.lstm(features)
         else:
             h, c = h_c
-            intermediate, h_c = self.lstm(x, h, c)
+            intermediate, h_c = self.lstm(features, h, c)
         intermediate, _ = pad_packed_sequence(intermediate, batch_first=True, padding_value=0, total_length=14)
 
         intermediate = self.dense(intermediate)

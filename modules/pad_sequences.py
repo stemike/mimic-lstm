@@ -5,46 +5,40 @@ import pandas as pd
 import torch
 
 
-class PadSequences(object):
+def pad_sequences(df, lb, time_steps, pad_value=-100, id_col='hadm_id'):
+    ''' Takes a file path for the dataframe to operate on. lb is a lower bound to discard
+        ub is an upper bound to truncate on. All entries are padded to their upper bound '''
+    print("Start Padding")
+    df = df.groupby(id_col).filter(lambda group: len(group) > lb).reset_index(drop=True)
+    df = df.groupby(id_col).apply(lambda group: group[0:time_steps]).reset_index(drop=True)
+    df = df.groupby(id_col).apply(lambda group: pd.concat(
+        [group, pd.DataFrame(pad_value * np.ones((time_steps - len(group), len(df.columns))), columns=df.columns)],
+        axis=0)).reset_index(drop=True)
+    print("Finished Padding")
+    return df
 
-    def __init__(self):
-        self.name = 'padder'
 
-    def pad(self, df, lb, time_steps, pad_value=-100, id_col='hadm_id'):
-        ''' Takes a file path for the dataframe to operate on. lb is a lower bound to discard
-            ub is an upper bound to truncate on. All entries are padded to their upper bound '''
-        print("Start Padding")
-        self.uniques = pd.unique(df[id_col])
-        df = df.groupby(id_col).filter(lambda group: len(group) > lb).reset_index(drop=True)
-        df = df.groupby(id_col).apply(lambda group: group[0:time_steps]).reset_index(drop=True)
-        df = df.groupby(id_col).apply(lambda group: pd.concat(
-            [group, pd.DataFrame(pad_value * np.ones((time_steps - len(group), len(df.columns))), columns=df.columns)],
-            axis=0)).reset_index(drop=True)
-        print("Finished Padding")
-        return df
+def z_score_normalize(matrix):
+    ''' Performs Z Score Normalization for 3rd order tensors
+        matrix should be (batchsize, time_steps, features)
+        Padded time steps should be masked with np.nan '''
 
-    def ZScoreNormalize(self, matrix):
-        ''' Performs Z Score Normalization for 3rd order tensors
-            matrix should be (batchsize, time_steps, features) 
-            Padded time steps should be masked with np.nan '''
-
-        x_matrix = matrix[:, :, 0:-1]
-        y_matrix = matrix[:, :, -1]
-        print(y_matrix.shape)
-        y_matrix = y_matrix.reshape(y_matrix.shape[0], y_matrix.shape[1], 1)
-        means = np.nanmean(x_matrix, axis=(0, 1))
-        stds = np.nanstd(x_matrix, axis=(0, 1))
-        print(x_matrix.shape)
-        print(means.shape)
-        print(stds.shape)
-        x_matrix = x_matrix - means
-        print(x_matrix.shape)
-        x_matrix = x_matrix / stds
-        print(x_matrix.shape)
-        print(y_matrix.shape)
-        matrix = np.concatenate([x_matrix, y_matrix], axis=2)
-
-        return matrix
+    x_matrix = matrix[:, :, 0:-1]
+    y_matrix = matrix[:, :, -1]
+    print(y_matrix.shape)
+    y_matrix = y_matrix.reshape(y_matrix.shape[0], y_matrix.shape[1], 1)
+    means = np.nanmean(x_matrix, axis=(0, 1))
+    stds = np.nanstd(x_matrix, axis=(0, 1))
+    print(x_matrix.shape)
+    print(means.shape)
+    print(stds.shape)
+    x_matrix = x_matrix - means
+    print(x_matrix.shape)
+    x_matrix = x_matrix / stds
+    print(x_matrix.shape)
+    print(y_matrix.shape)
+    matrix = np.concatenate([x_matrix, y_matrix], axis=2)
+    return matrix
 
 
 def get_seq_length_from_padded_seq(sequence):
