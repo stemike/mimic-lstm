@@ -1,11 +1,12 @@
 import csv
+import os
 import re
 
 import numpy as np
 import pandas as pd
 
 from functools import reduce
-from modules.item_id_parser import ItemIDParser
+from classes.item_id_parser import ItemIDParser
 
 
 def map_dict(elem, dictionary):
@@ -20,16 +21,28 @@ class MimicParser(object):
     This class structures MIMIC and builds features, then makes 24 hour windows
     """
 
-    def __init__(self, root, folder, file_name, id_column, label_column, mimic_version=4):
-        if mimic_version != 4 and mimic_version != 3:
+    def __init__(self, mimic_folder_path, folder, file_name, id_column, label_column, mimic_version=4):
+
+        if mimic_version == 4:
+            id_column = id_column.lower()
+            label_column = label_column.lower()
+        elif mimic_version == 3:
+            id_column = id_column.upper()
+            label_column = label_column.upper()
+        else:
             raise Exception(f"Unsupported Mimic Version: {mimic_version}")
+
+        if not os.path.exists(f'{mimic_folder_path}/{folder}'):
+            os.makedirs(f'{mimic_folder_path}/{folder}')
+
         self.mimic_version = mimic_version
-        self.root = root
+        self.mimic_folder_path = mimic_folder_path
         self.output_folder = folder
         self.base_file_name = file_name
-        self.standard_path = f'{self.root}/{self.output_folder}/{self.base_file_name}'
-        self.pid = ItemIDParser(root, id_column, label_column)
+        self.standard_path = f'{self.mimic_folder_path}/{self.output_folder}/{self.base_file_name}'
+        self.pid = ItemIDParser(mimic_folder_path, id_column, label_column)
 
+        # Output paths for the files produced by methods below
         self.rt_path = self.standard_path + '_reduced'
         self.cdb_path = self.rt_path + '_24hrs_blocks'
         self.aac_path = self.cdb_path + '_p_admissions'
@@ -37,7 +50,6 @@ class MimicParser(object):
         self.ap_path = self.apc_path + '_p_scripts'
         self.aii_path = self.ap_path + '_p_icds'
         self.an_path = self.aii_path + '_p_notes'
-        print(self.rt_path)
 
     def reduce_total(self):
         """
@@ -55,7 +67,7 @@ class MimicParser(object):
         mode = 'w'
         header = True
         print('Start processing df')
-        for i, df_chunk in enumerate(pd.read_csv(self.root + '/CHARTEVENTS.csv', iterator=True, chunksize=chunksize)):
+        for i, df_chunk in enumerate(pd.read_csv(self.mimic_folder_path + '/CHARTEVENTS.csv', iterator=True, chunksize=chunksize)):
             print(f'\rChunk number: {i}', end='')
             df_chunk.columns = df_chunk.columns.str.lower()
             df = df_chunk[df_chunk['itemid'].isin(reduce(lambda x, y: x.union(y), feature_dict.values()))]
@@ -140,7 +152,7 @@ class MimicParser(object):
     def add_admissions_columns(self):
 
         ''' Add demographic columns to create_day_blocks '''
-        df = pd.read_csv(f'{self.root}/ADMISSIONS.csv')
+        df = pd.read_csv(f'{self.mimic_folder_path}/ADMISSIONS.csv')
         df.columns = df.columns.str.lower()
         ethn_dict = dict(zip(df['hadm_id'], df['ethnicity']))
         admittime_dict = dict(zip(df['hadm_id'], df['admittime']))
@@ -162,7 +174,7 @@ class MimicParser(object):
 
         ''' Add demographic columns to create_day_blocks '''
 
-        df = pd.read_csv(self.root + '/PATIENTS.csv')
+        df = pd.read_csv(self.mimic_folder_path + '/PATIENTS.csv')
         df.columns = df.columns.str.lower()
 
         gender_dict = dict(zip(df['subject_id'], df['gender']))
@@ -203,7 +215,7 @@ class MimicParser(object):
             prescriptions['drug_feature'][condition] = feature
             count += 1
         prescriptions.dropna(how='any', axis=0, inplace=True, subset=['drug_feature'])
-        prescriptions.to_csv(self.root + '/PRESCRIPTIONS_reduced.csv', index=False)
+        prescriptions.to_csv(self.mimic_folder_path + '/PRESCRIPTIONS_reduced.csv', index=False)
         print("Cleaned Prescriptions")
 
     def add_prescriptions(self):
@@ -215,11 +227,11 @@ class MimicParser(object):
             max_index = 2 # Go until hadm_id
             startdate_index = 2
             enddate_index = 3
-        with open(self.root + '/PRESCRIPTIONS_reduced.csv', 'r') as f:
+        with open(self.mimic_folder_path + '/PRESCRIPTIONS_reduced.csv', 'r') as f:
             print(f"Number of rows: {sum(1 for _ in csv.reader(f))}")
-        with open(self.root + '/PRESCRIPTIONS_reduced.csv', 'r') as f:
+        with open(self.mimic_folder_path + '/PRESCRIPTIONS_reduced.csv', 'r') as f:
             csvreader = csv.reader(f)
-            with open(self.root + '/PRESCRIPTIONS_reduced_byday.csv', 'w') as g:
+            with open(self.mimic_folder_path + '/PRESCRIPTIONS_reduced_byday.csv', 'w') as g:
                 csvwriter = csv.writer(g)
                 first_line = csvreader.__next__()
                 print(first_line[0:max_index] + ['chartday'] + [first_line[-1]])
@@ -232,7 +244,7 @@ class MimicParser(object):
                     count += 1
         print('\rFinished writing PRESCRIPTIONS_reduced_byday.csv')
 
-        df = pd.read_csv(self.root + '/PRESCRIPTIONS_reduced_byday.csv')
+        df = pd.read_csv(self.mimic_folder_path + '/PRESCRIPTIONS_reduced_byday.csv')
         df['chartday'] = df['chartday'].str.split(' ').apply(lambda x: x[0])
         df['hadmid_day'] = df['hadm_id'].astype('str') + '_' + df['chartday']
         df['value'] = 1
@@ -259,16 +271,17 @@ class MimicParser(object):
 
     def add_icd_infect(self):
 
-        df_icd = pd.read_csv(self.root + '/PROCEDURES_ICD.csv')
+        df_icd = pd.read_csv(self.mimic_folder_path + '/PROCEDURES_ICD.csv')
         df_icd.columns = df_icd.columns.str.lower()
-        df_micro = pd.read_csv(self.root + '/MICROBIOLOGYEVENTS.csv')
+        df_micro = pd.read_csv(self.mimic_folder_path + '/MICROBIOLOGYEVENTS.csv')
         df_micro.columns = df_micro.columns.str.lower()
         suspect_hadmid = set(pd.unique(df_micro['hadm_id']).tolist())
 
         if self.mimic_version == 3:
             df_icd_ckd = df_icd[df_icd['icd9_code'] == 585]
         elif self.mimic_version == 4:
-            df_icd_ckd = df_icd[df_icd['icd_code'] == 585 and df_icd['icd_version'] == 9]
+            df_icd_ckd = df_icd[df_icd['icd_code'] == 585]
+            df_icd_ckd = df_icd_ckd[df_icd_ckd['icd_version'] == 9]
 
         ckd = set(df_icd_ckd['hadm_id'].values.tolist())
 
@@ -279,7 +292,7 @@ class MimicParser(object):
         print("Added ICD Infections")
 
     def add_notes(self):
-        df = pd.read_csv(self.root + '/NOTEEVENTS.csv')
+        df = pd.read_csv(self.mimic_folder_path + '/NOTEEVENTS.csv')
         df.columns = df.columns.str.lower()
         df_rad_notes = df[['text', 'hadm_id']][df['category'] == 'Radiology']
         cta = df_rad_notes['text'].str.contains('CTA', flags=re.IGNORECASE)
@@ -307,6 +320,9 @@ class MimicParser(object):
         self.clean_prescriptions()
         self.add_prescriptions()
         self.add_icd_infect()
-        self.add_notes()
-        print(f"Finished Parsing MIMIC {self.mimic_version}\nFinal file can be found under:\n{self.an_path + '.csv'}")
-        return self.an_path + '.csv'
+        if self.mimic_version == 3:
+            self.add_notes()
+            file_path = self.an_path + '.csv'
+        else:
+            file_path = self.aii_path + '.csv'
+        print(f"Finished Parsing MIMIC {self.mimic_version}\nFinal file can be found under:\n{file_path}")

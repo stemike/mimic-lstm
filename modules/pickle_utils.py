@@ -12,11 +12,11 @@ def load_pickle(path):
     return variable
 
 
-def get_pickle_path(variable_name, target, folder):
+def get_pickle_path(file_name, target, folder='./pickled_data_sets'):
     '''
 
     Returns: the path to the pickle folder with the filename structure
-             {target}_{variable_name}.txt in this case
+             {target}_{variable_name}.pickle in this case
 
     '''
-    return f'./{folder}/{target}_{variable_name}.txt'
+    return f'{folder}/{target}_{file_name}.pickle'

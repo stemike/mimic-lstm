@@ -1,5 +1,6 @@
-/mimic_database/
-/pickled_objects/
+/mimic_3_database/
+/mimic_4_database/
+/pickled_data_sets/
 /saved_models/
 /logs/
 /.ipynb_checkpoints/
