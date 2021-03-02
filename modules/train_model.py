@@ -8,14 +8,14 @@ from torch.optim import RMSprop
 from torch.utils.data import TensorDataset, DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from classes.model import ICU_LSTM
+from modules.classes.model import ICU_LSTM
 from time import time
 
 from modules.pickle_utils import load_pickle, get_pickle_path
 
 
 def return_loaded_model(model_name):
-    return torch.load("./saved_models/best_models/{0}.h5".format(model_name))
+    return torch.load("./output/saved_models/best_models/{0}.h5".format(model_name))
 
 
 def update(model, loss_function, data_loader, optimizer, device='cpu'):
@@ -63,19 +63,20 @@ def train_model(model_name, target='MI', n_percentage=1.0,
 
   """
     torch.manual_seed(seed)
-    checkpoint_dir = './saved_models/best_models'
-    final_model_dir = './saved_models/fully_trained_models'
-    logs_dir = './saved_models/logs'
+    base_dir = './output/saved_models'
+    checkpoint_dir = f'{base_dir}/best_models'
+    final_model_dir = f'{base_dir}/fully_trained_models'
+    logs_dir = f'{base_dir}/logs'
     for directory in [checkpoint_dir, final_model_dir, logs_dir]:
         if not os.path.exists(directory):
             os.makedirs(directory)
 
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
-    training_data = load_pickle(get_pickle_path('data_train', target, data_path))
-    training_targets = load_pickle(get_pickle_path('targets_train', target, data_path))
-    validation_data = load_pickle(get_pickle_path('data_validation', target, data_path))
-    validation_targets = load_pickle(get_pickle_path('target_validation', target, data_path))
+    training_data = load_pickle(get_pickle_path('train_data', target, data_path))
+    training_targets = load_pickle(get_pickle_path('train_targets', target, data_path))
+    validation_data = load_pickle(get_pickle_path('validation_data', target, data_path))
+    validation_targets = load_pickle(get_pickle_path('validation_target', target, data_path))
     number_feature_cols = training_data.shape[2]
 
     # N_Samples x Seq_Length x N_Features

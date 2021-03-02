@@ -57,7 +57,7 @@ class MimicPreProcessor(object):
         feature_names.remove(target)
         df = df[feature_names + [target]]
 
-        # Only remove id_col from features because it is later
+        # Only remove id_col from features because it is needed later
         feature_names.remove(self.id_col)
         print(f'Created target {target}')
 
@@ -138,7 +138,7 @@ class MimicPreProcessor(object):
                 data_validation, target_validation, data_validation_mask, targets_validation_mask,
                 data_test, targets_test, data_test_mask, targets_test_mask)
 
-    def pre_process_and_save_files(self, target, output_folder='./pickled_data_sets'):
+    def pre_process_and_save_files(self, target, output_folder='./output/pickled_data_sets/unspecified_mimic'):
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
         df, feature_names = self.create_target(target)
@@ -149,18 +149,18 @@ class MimicPreProcessor(object):
 
         dump_pickle(feature_names, get_pickle_path('features', target, output_folder))
 
-        dump_pickle(data_train, get_pickle_path('data_train', target, output_folder))
-        dump_pickle(targets_train, get_pickle_path('targets_train', target, output_folder))
-        dump_pickle(data_train_mask, get_pickle_path('data_train_mask', target, output_folder))
-        dump_pickle(targets_train_mask, get_pickle_path('targets_train_mask', target, output_folder))
+        dump_pickle(data_train, get_pickle_path('train_data', target, output_folder))
+        dump_pickle(targets_train, get_pickle_path('train_targets', target, output_folder))
+        dump_pickle(data_train_mask, get_pickle_path('train_data_mask', target, output_folder))
+        dump_pickle(targets_train_mask, get_pickle_path('train_targets_mask', target, output_folder))
 
-        dump_pickle(data_validation, get_pickle_path('data_validation', target, output_folder))
-        dump_pickle(target_validation, get_pickle_path('target_validation', target, output_folder))
-        dump_pickle(data_validation_mask, get_pickle_path('data_validation_mask', target, output_folder))
-        dump_pickle(targets_validation_mask, get_pickle_path('targets_validation_mask', target, output_folder))
+        dump_pickle(data_validation, get_pickle_path('validation_data', target, output_folder))
+        dump_pickle(target_validation, get_pickle_path('validation_target', target, output_folder))
+        dump_pickle(data_validation_mask, get_pickle_path('validation_data_mask', target, output_folder))
+        dump_pickle(targets_validation_mask, get_pickle_path('validation_targets_mask', target, output_folder))
 
-        dump_pickle(data_test, get_pickle_path('data_test', target, output_folder))
-        dump_pickle(targets_test, get_pickle_path('targets_test', target, output_folder))
-        dump_pickle(data_test_mask, get_pickle_path('data_test_mask', target, output_folder))
-        dump_pickle(targets_test_mask, get_pickle_path('targets_test_mask', target, output_folder))
+        dump_pickle(data_test, get_pickle_path('test_data', target, output_folder))
+        dump_pickle(targets_test, get_pickle_path('test_targets', target, output_folder))
+        dump_pickle(data_test_mask, get_pickle_path('test_data_mask', target, output_folder))
+        dump_pickle(targets_test_mask, get_pickle_path('test_targets_mask', target, output_folder))
         print(f'Saved files to folder: {output_folder}')

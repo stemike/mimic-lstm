@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from functools import reduce
-from classes.item_id_parser import ItemIDParser
+from modules.classes.item_id_parser import ItemIDParser
 
 
 def map_dict(elem, dictionary):
