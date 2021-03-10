@@ -58,7 +58,6 @@ class MimicParser(object):
         feature_relevant_columns = ['subject_id', 'hadm_id', 'itemid', 'charttime', 'value', 'valuenum']
         if self.mimic_version == 3:
             feature_relevant_columns += ['icustay_id']
-            feature_relevant_columns = ['subject_id', 'hadm_id', 'icustay_id', 'itemid', 'charttime', 'value', 'valuenum']
         elif self.mimic_version == 4:
             feature_relevant_columns += ['stay_id']
         feature_dict = self.pid.get_feature_dictionary()
@@ -184,11 +183,10 @@ class MimicParser(object):
             dob_dict = dict(zip(df['subject_id'], df['dob']))
             df_shard['dob'] = df_shard['subject_id'].apply(lambda x: map_dict(x, dob_dict))
             df_shard['yob'] = df_shard['dob'].str.split('-').apply(lambda x: x[0]).astype('int')
-        df_shard['admityear'] = df_shard['admittime'].str.split('-').apply(lambda x: x[0]).astype('int')
-
-        # Date of birth omitted in MIMIC 4
-        if 'dob' in df.columns:
+            # Date of birth replaced by anchor_age
             df_shard['age'] = df_shard['admityear'].subtract(df_shard['yob'])
+
+        df_shard['admityear'] = df_shard['admittime'].str.split('-').apply(lambda x: x[0]).astype('int')
         df_shard['gender'] = df_shard['subject_id'].apply(lambda x: map_dict(x, gender_dict))
 
         gender_dummied = pd.get_dummies(df_shard['gender'], drop_first=True)
