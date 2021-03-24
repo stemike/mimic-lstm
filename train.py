@@ -61,4 +61,8 @@ def main(parse_mimic, pre_process_data, create_models, mimic_version=4):
 
 
 if __name__ == "__main__":
-    main(False, True, True, 3)
+    parse_mimic = True
+    pre_process_data = True
+    create_models = True
+    mimic_version = 3
+    main(parse_mimic, pre_process_data, create_models, 3)
