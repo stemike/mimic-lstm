@@ -11,11 +11,11 @@ dependencies:
   - matplotlib
   - numpy
   - pandas
-  - pickle
   - scipy
   - scikit-learn
   - seaborn
   - pytorch=1.7.0
+  - tensorboard
   - torchvision
   - torchaudio
   - cudatoolkit=11.0
