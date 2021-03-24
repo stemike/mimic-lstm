@@ -10,6 +10,11 @@ To begin, clone the mimic-lstm repository. Within the repository, create a folde
 
 The last thing that needs to be done is setting the variables in train.py to your preferences. The program will create the rest of the folders itself.
 
+The pipeline is split into three parts:
+- The first is parsing the mimic data set into a single file (performed by mimic_parser.py)
+- The second is generating data set for each target out of the parsed file (performed by mimic_pre_processor.py)
+- The third is training the models (performed by trained_model.py)
+
 Models and figures are generated in the test.ipynb notebook. Simply adjusting the target to 'MI', 'Sepsis', or 'Vancomycin' will generate the figures panels and images required for each part of the figure.
 
 ### Prerequisites
